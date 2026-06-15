@@ -101,6 +101,7 @@ const data = {
     { id: 3, memberId: 1, benefitId: 4, status: 'available', expireDate: '2024-06-16', usedDate: null },
     { id: 4, memberId: 1, benefitId: 6, status: 'available', expireDate: '2025-12-31', usedDate: null },
     { id: 5, memberId: 1, benefitId: 8, status: 'used', expireDate: '2024-05-01', usedDate: '2024-05-10' },
+    { id: 16, memberId: 1, benefitId: 2, status: 'available', expireDate: '2026-12-31', usedDate: null },
     { id: 6, memberId: 2, benefitId: 1, status: 'available', expireDate: '2024-10-31', usedDate: null },
     { id: 7, memberId: 2, benefitId: 2, status: 'available', expireDate: '2025-12-31', usedDate: null },
     { id: 8, memberId: 2, benefitId: 3, status: 'available', expireDate: '2024-06-16', usedDate: null },
@@ -168,7 +169,8 @@ app.get('/api/member/:phone', (req, res) => {
     .filter(mb => mb.memberId === member.id)
     .map(mb => {
       const benefit = data.benefits.find(b => b.id === mb.benefitId);
-      return { ...mb, benefit };
+      const dynamicStatus = mb.status === 'available' && isExpired(mb.expireDate) ? 'expired' : mb.status;
+      return { ...mb, status: dynamicStatus, benefit };
     });
   
   res.json({
@@ -191,7 +193,8 @@ app.get('/api/member/:phone/benefits', (req, res) => {
     .filter(mb => mb.memberId === member.id)
     .map(mb => {
       const benefit = data.benefits.find(b => b.id === mb.benefitId);
-      return { ...mb, benefit };
+      const dynamicStatus = mb.status === 'available' && isExpired(mb.expireDate) ? 'expired' : mb.status;
+      return { ...mb, status: dynamicStatus, benefit };
     });
   
   if (status) {
@@ -314,6 +317,14 @@ app.delete('/api/benefits/:id', (req, res) => {
   res.json({ success: true });
 });
 
+function isExpired(expireDate) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const expire = new Date(expireDate);
+  expire.setHours(0, 0, 0, 0);
+  return expire < today;
+}
+
 app.post('/api/redeem', (req, res) => {
   const { phone, benefitId, operator } = req.body;
   const member = data.members.find(m => m.phone === phone);
@@ -328,6 +339,10 @@ app.post('/api/redeem', (req, res) => {
   
   if (!memberBenefit) {
     return res.status(400).json({ error: '权益不可用或已使用' });
+  }
+  
+  if (isExpired(memberBenefit.expireDate)) {
+    return res.status(400).json({ error: '权益已过期' });
   }
   
   memberBenefit.status = 'used';

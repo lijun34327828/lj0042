@@ -12,6 +12,7 @@ function MembersAdmin() {
   const [toast, setToast] = useState(null)
   const [cardTypes, setCardTypes] = useState([])
   const [searchText, setSearchText] = useState('')
+  const [cardTypeFilter, setCardTypeFilter] = useState('')
 
   useEffect(() => {
     fetchMembers()
@@ -89,6 +90,8 @@ function MembersAdmin() {
 
   const filteredMembers = members.filter(m =>
     m.name.includes(searchText) || m.phone.includes(searchText)
+  ).filter(m =>
+    !cardTypeFilter || m.cardTypeId === Number(cardTypeFilter)
   )
 
   if (loading) return <div>加载中...</div>
@@ -98,7 +101,7 @@ function MembersAdmin() {
       <div className="card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <h3 style={{ color: '#2c3e50' }}>会员管理</h3>
-          <div style={{ display: 'flex', gap: '12px' }}>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
             <input
               type="text"
               placeholder="搜索会员姓名或手机号"
@@ -106,8 +109,22 @@ function MembersAdmin() {
               onChange={e => setSearchText(e.target.value)}
               style={{ width: '250px' }}
             />
+            <select
+              value={cardTypeFilter}
+              onChange={e => setCardTypeFilter(e.target.value)}
+              style={{ width: '150px' }}
+            >
+              <option value="">全部卡种</option>
+              {cardTypes.map(card => (
+                <option key={card.id} value={card.id}>{card.name}</option>
+              ))}
+            </select>
             <button className="btn btn-primary" onClick={handleAdd}>+ 新增会员</button>
           </div>
+        </div>
+
+        <div style={{ marginBottom: '12px', color: '#7f8c8d', fontSize: '14px' }}>
+          当前 {filteredMembers.length} 人 / 共 {members.length} 人
         </div>
 
         <table>

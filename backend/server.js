@@ -360,6 +360,13 @@ app.post('/api/redeem', (req, res) => {
   
   data.stats.todayRedemptions++;
   data.stats.totalRedemptions++;
+
+  const dayNames = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+  const todayName = dayNames[new Date().getDay()];
+  const todayBar = data.stats.weeklyRedemptions.find(d => d.day === todayName);
+  if (todayBar) {
+    todayBar.count++;
+  }
   
   res.json({
     success: true,
@@ -412,8 +419,11 @@ app.post('/api/members', (req, res) => {
   data.stats.todayNewCards++;
   
   const cardType = data.cardTypes.find(c => c.id === newMember.cardTypeId);
-  cardType.count = (cardType.count || 0) + 1;
-  
+  const distItem = data.stats.cardDistribution.find(d => d.name === cardType.name);
+  if (distItem) {
+    distItem.count++;
+  }
+
   res.json({ ...newMember, cardType });
 });
 
